@@ -1,62 +1,59 @@
 package com.mockcompany.webapp.service;
 
-import com.mockcompany.webapp.data.ProductItemRepository;
-import com.mockcompany.webapp.model.ProductItem;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.stream.StreamSupport;
+
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import java.util.*;
-import java.util.regex.Pattern;
+import com.mockcompany.webapp.data.ProductItemRepository;
+import com.mockcompany.webapp.model.ProductItem;
 
 @Service
 public class SearchService {
 
     private final ProductItemRepository productItemRepository;
-    private final EntityManager entityManager;
 
-    public SearchService(ProductItemRepository productItemRepository, EntityManager entityManager) {
+    public SearchService(ProductItemRepository productItemRepository) {
         this.productItemRepository = productItemRepository;
-        this.entityManager = entityManager;
     }
 
+    /**
+     * Searches for products that match the given query in their name or description.
+     */
     public Collection<ProductItem> search(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
         String lowerCaseQuery = query.toLowerCase();
-        List<ProductItem> itemList = new ArrayList<>();
 
-        for (ProductItem item : productItemRepository.findAll()) {
-            if (item.getName().toLowerCase().contains(lowerCaseQuery) ||
-                    (item.getDescription() != null && item.getDescription().toLowerCase().contains(lowerCaseQuery))) {
-                itemList.add(item);
-            }
-        }
-
-        return itemList;
+        // Convert Iterable to Stream and filter
+        return StreamSupport.stream(productItemRepository.findAll().spliterator(), false)
+                .filter(item -> matchesQuery(item, lowerCaseQuery))
+                .toList();
     }
 
+    /**
+     * Counts the number of products matching a specific search term.
+     */
     public int countProductsMatchingTerm(String term) {
+        if (term == null || term.trim().isEmpty()) {
+            return 0;
+        }
+
         String lowerTerm = term.toLowerCase();
-        Iterable<ProductItem> items = productItemRepository.findAll();
-        int count = 0;
 
-        for (ProductItem item : items) {
-            if (item.getName().toLowerCase().contains(lowerTerm) ||
-                    (item.getDescription() != null && item.getDescription().toLowerCase().contains(lowerTerm))) {
-                count++;
-            }
-        }
-
-        return count;
+        return (int) StreamSupport.stream(productItemRepository.findAll().spliterator(), false)
+                .filter(item -> matchesQuery(item, lowerTerm))
+                .count();
     }
 
-    public Map<String, Integer> getSearchTermHits(List<String> terms) {
-        Map<String, Integer> hits = new HashMap<>();
-        for (String term : terms) {
-            hits.put(term, countProductsMatchingTerm(term));
-        }
-        return hits;
+    /**
+     * Helper method to check if a product matches a query.
+     */
+    private boolean matchesQuery(ProductItem item, String query) {
+        return (item.getName() != null && item.getName().toLowerCase().contains(query)) ||
+                (item.getDescription() != null && item.getDescription().toLowerCase().contains(query));
     }
-
-    public int getTotalProductCount() {
-        return (int) productItemRepository.count();
     }
-}
