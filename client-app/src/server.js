@@ -12,7 +12,7 @@ import image9 from "./images/9.png"
 import image10 from "./images/10.png"
 
 const productList = [
-  { id: 1, description: "Stuff", cost: 201.0, image: image1 },
+  { id: 1,   description: "Stuff", cost: 201.0, image: image1 },
   { id: 2, description: "Beautiful thing", cost: 2014, image: image2 },
   { id: 3, description: "Lovely", cost: 20.17, image: image3 },
   { id: 4, description: "Check this out", cost: 2.021, image: image4 },
